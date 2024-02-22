@@ -1,15 +1,31 @@
 // Get Quotes From API
+const quoteContainer = document.getElementById('quote-container')
 const quoteSpan = document.getElementById('quote')
 const authorSpan = document.getElementById('author')
 const twitterButton = document.getElementById('twitter-button')
 const quoteButton = document.getElementById('new-quote-button')
+const loaderDiv = document.getElementById('loader')
 
 let quotesArray = []
 let quotesLength = 0
 let actualIndex = 0
 let actualQuote = ''
+let fetchQuotesRetries = 0
+
+// Show loading
+const showLoadingSpinner = () => {
+    loaderDiv.hidden = false
+    quoteContainer.hidden = true
+}
+
+// Hide Loding
+const hideLoadingSpinner = () => {
+    quoteContainer.hidden = false
+    loaderDiv.hidden = true
+}
 
 const getQuotes = async () => {
+    showLoadingSpinner()
     if (quotesArray.length !== 0) {
         return [...quotesArray]
     }
@@ -26,13 +42,23 @@ const getQuotes = async () => {
 
         quotesArray = [...jsonData]
         quotesLength = jsonData.length
-        return jsonData;
-
     } catch (err) {
         // Catch Error Here
+        quotesArray = []
+        quotesLength = 0
+
         console.error('Error fetching the  quotes', err)
-        return null
+
+        fetchQuotesRetries++;
+        if (fetchQuotesRetries < 10) {
+            await getQuotes()
+        }
+
     }
+    finally {
+        return quotesArray
+    }
+
 }
 
 function getRandomQuote(quotesArray) {
@@ -56,6 +82,7 @@ async function getSingleQuote() {
 
     quoteSpan.textContent = actualQuote.text
     authorSpan.textContent = actualQuote.author || 'Unknown'
+    hideLoadingSpinner()
 
     // Check quote length to determine styling
     if (randomQuote.text.length > 50) {
@@ -68,6 +95,7 @@ async function getSingleQuote() {
 getSingleQuote()
 
 
+
 const tweetQuote = () => {
     const twitterUrl = `https://twitter.com/intent/tweet?text=${actualQuote.text}-${actualQuote.author}`
     console.log(twitterUrl)
@@ -77,3 +105,4 @@ const tweetQuote = () => {
 // Add event listeners
 twitterButton.addEventListener('click', tweetQuote)
 quoteButton.addEventListener('click', getSingleQuote)
+
